@@ -1,93 +1,85 @@
 package com.examly.springapp;
 
-import static org.junit.Assert.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.File;
-
-import org.junit.jupiter.api.Test;
+import org.junit.Test; 
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import com.examly.springapp.model.Profile;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-@RunWith(SpringJUnit4ClassRunner.class) 
-@SpringBootTest(classes = SpringappApplication.class)
+@SpringBootTest
 @AutoConfigureMockMvc
-class SpringappApplicationTests {
-	
-	 @Autowired
-	    private MockMvc mockMvc;
+@RunWith(SpringRunner.class)
+public class SpringApplicationTests {
 
-	 
-	 Profile profile= new Profile(1L,"Type","name","address","mobile","email","123",1L);
-	
+	@Autowired
+    private MockMvc mockMvc;	
+
+	//Add A New Task
 	@Test
-    public void testGetProfileAll() throws Exception {
-    	
-        mockMvc.perform(get("/admin/profile"))
-        .andExpect(MockMvcResultMatchers.status().isOk())
-        .andDo(print())
-        .andExpect(content().contentType("application/json"))
-			.andExpect(jsonPath("$").isArray())
-			.andReturn();
+    public void test_case1() throws Exception {
+		
+		String dataOne = "{\"taskId\":\"12211\",\"taskHolderName\":\"Gowthaman M\",\"taskDate\":\"4/15/2021\",\"taskName\":\"Spring Projects\",\"taskStatus\":\"In Progress\"}";
+	 	mockMvc.perform(MockMvcRequestBuilders.post("/saveTask")
+	 			.contentType(MediaType.APPLICATION_JSON)
+	 			.content(dataOne)
+	 			.accept(MediaType.APPLICATION_JSON))
+	        	.andExpect(status().isOk())
+	        	.andReturn();
+	 	
     }
-    
-    @Test
-    public void testCaseGetProfileById() throws Exception {
-    	
-        mockMvc.perform(get("/admin/profile").param("id", "1"))
-        .andExpect(MockMvcResultMatchers.status().isOk())
-        .andDo(print())
-        .andExpect(content().contentType("application/json"))
-			.andExpect(jsonPath("$").isArray())
-			.andReturn();
+	
+	
+	//Get All Task
+	@Test
+    public void test_case2() throws Exception {
+		
+	 	mockMvc.perform(MockMvcRequestBuilders.get("/alltasks")
+	 			.contentType(MediaType.APPLICATION_JSON)
+	 			.accept(MediaType.APPLICATION_JSON))
+	        	.andExpect(status().isOk())
+		        .andExpect(MockMvcResultMatchers.jsonPath("$[*].houseNo").exists())
+		        .andExpect(MockMvcResultMatchers.jsonPath("$").isNotEmpty())
+	        	.andReturn();
+	 	
     }
-        
-    
-    @Test
-    public void testCreateProfile() throws Exception {
-    
-        mockMvc.perform(MockMvcRequestBuilders.post("/admin/profile")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(profile)))
-                .andExpect(MockMvcResultMatchers.status().isCreated());
+	
+	//Get A Task By ID
+	@Test
+	public void test_case3() throws Exception {
+		
+		mockMvc.perform(MockMvcRequestBuilders.get("/getTask")
+				.param("taskId","12211")
+				.contentType(MediaType.APPLICATION_JSON)
+		 		.accept(MediaType.APPLICATION_JSON))
+		        .andExpect(status().isOk())
+		        .andExpect(jsonPath("$.taskHolderName").value("Gowthaman M"))
+		        .andExpect(jsonPath("$.taskDate").value("4/15/2021"))
+		        .andExpect(jsonPath("$.taskName").value("Spring Projects"))
+				.andExpect(jsonPath("$.taskStatus").value("In Progress"))
+		        .andReturn();
+			
+	}
+	
+	//Delete A Task
+	@Test
+	public void test_case5() throws Exception {
+		
+		mockMvc.perform(MockMvcRequestBuilders.get("/deleteTask")
+				.param("taskId","12211")
+				.contentType(MediaType.APPLICATION_JSON)
+		 		.accept(MediaType.APPLICATION_JSON))
+		        .andExpect(status().isOk())
+		        .andReturn();
+			
+	}
 
-    }
-    
-    
-    @Test
-    public void test_case1() {
-    String directoryPath = "src/main/java/com/examly/springapp/controller";
-     File directory = new File(directoryPath);
-     assertTrue(directory.exists() && directory.isDirectory());;
-     }
-
-
-   @Test
-   public void test_case2() {
-   String filePath = "src/main/java/com/examly/springapp/controller/ProfileController.java";
-   File file = new File(filePath);
-   assertTrue(file.exists() && file.isFile());;
-
-    }
-   
-  
-  private String asJsonString(Object object) throws JsonProcessingException {
-      ObjectMapper objectMapper = new ObjectMapper();                                   
-      return objectMapper.writeValueAsString(object);
-  }
 
 }
